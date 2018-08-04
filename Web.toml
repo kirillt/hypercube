@@ -1,0 +1,6 @@
+default-target = "wasm32-unknown-unknown"
+#default-target = "wasm32-unknown-emscripten"
+#default-target = "asmjs-unknown-emscripten"
+
+[cargo-web]
+minimum-version = "0.6.0"
