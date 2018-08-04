@@ -14,64 +14,26 @@ mod webgl_rendering_context;
 
 mod state;
 mod transformations;
+mod shaders;
+mod canvas;
 
 mod vector;
 mod render;
 mod figures;
 mod shapes;
 
-use stdweb::web::{
-    IEventTarget,
-    IHtmlElement,
-    IParentNode,
-    document,
-    window,
-    TypedArray,
-};
+use stdweb::web::TypedArray;
 
-use stdweb::web::event::{
-    ResizeEvent,
-};
-
-use stdweb::unstable::TryInto;
-
-use stdweb::web::html_element::CanvasElement;
-
+use webgl_rendering_context::WebGLRenderingContext as gl;
 use webgl_rendering_context::WebGLRenderingContext as gl;
 
 use state::*;
 
-// Shamelessly stolen from webplatform's TodoMVC example.
-macro_rules! enclose {
-    ( ($( $x:ident ),*) $y:expr ) => {
-        {
-            $(let $x = $x.clone();)*
-            $y
-        }
-    };
-}
-
-
-
 fn main() {
     stdweb::initialize();
 
-    let canvas: CanvasElement = document()
-        .query_selector( "#frame" )
-        .unwrap().unwrap().try_into().unwrap();
-
+    let canvas = canvas::establish();
     let context: gl = canvas.get_context().unwrap();
-
-    canvas.set_width(canvas.offset_width() as u32);
-    canvas.set_height(canvas.offset_height() as u32);
-
-    context.clear_color(1.0, 0.0, 0.0, 1.0);
-    context.clear(gl::COLOR_BUFFER_BIT);
-
-    window().add_event_listener( enclose!((canvas) move |_: ResizeEvent| {
-        canvas.set_width(canvas.offset_width() as u32);
-        canvas.set_height(canvas.offset_height() as u32);
-    }));
 
     let vertices = TypedArray::<f32>::from(&[
         -1.,-1.,-1.,  1.,-1.,-1.,  1., 1.,-1., -1., 1.,-1.,
