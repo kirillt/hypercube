@@ -28,7 +28,8 @@ pub struct State {
     pub size: i32,
 
     pub fps_div: HtmlElement,
-    pub prev: f64
+    pub prev: f64,
+    pub frames: usize
 }
 
 impl State {
@@ -55,11 +56,18 @@ impl State {
         self.context.bind_buffer(gl::ELEMENT_ARRAY_BUFFER, Some(&self.index_buffer));
         self.context.draw_elements(gl::TRIANGLES, self.size, gl::UNSIGNED_SHORT, 0);
 
+        let delta = time - self.prev;
         if !self.prev.is_nan() {
-            let time = time - self.prev;
-            self.fps_div.set_text_content(time.round().to_string().as_str());
+            if delta > 300.0 {
+                let fps = (1000 * self.frames) as f64 / delta;
+                self.fps_div.set_text_content(fps.round().to_string().as_str());
+                self.frames = 0;
+                self.prev = time;
+            }
+        } else {
+            self.prev = time;
         }
-        self.prev = time;
+        self.frames += 1;
 
         window().request_animation_frame(move |time| {
             rc.borrow_mut().animate(time, rc.clone());

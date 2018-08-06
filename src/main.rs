@@ -46,15 +46,19 @@ fn main() {
 
     let shaders: WebGLProgram = shaders::establish(&context);
 
-    let figure = figures::Triangle {
-        a: vector::UNIT_X,
-        b: vector::UNIT_Y,
-        c: vector::UNIT_Z,
+    let object = shapes::Tetrahedron {
+        base: figures::Triangle {
+            a: vector::UNIT_X,
+            b: vector::UNIT_Y,
+            c: vector::UNIT_Z,
 
-        color: render::BLUE
+            color: render::BLUE
+        },
+
+        peak: vector::UNIT
     };
 
-    shaders::bind(&context, &shaders, &figure);
+    shaders::bind(&context, &shaders, &object);
     context.use_program(Some(&shaders));
 
     let mov_matrix = [1.,0.,0.,0., 0.,1.,0.,0., 0.,0.,1.,0., 0.,0.,0.,1.];
@@ -69,7 +73,7 @@ fn main() {
     let m_matrix = context.get_uniform_location(&shaders, "Mmatrix").unwrap();
 
     let (index_buffer, size) = {
-        let indices = figure.indices();
+        let indices = object.indices();
         (buffer::indices(&context, &indices), indices.len() as i32)
     };
 
@@ -89,7 +93,8 @@ fn main() {
         size,
 
         fps_div,
-        prev
+        prev,
+        frames: 0
     }));
 
     state.borrow_mut().animate(0., state.clone());

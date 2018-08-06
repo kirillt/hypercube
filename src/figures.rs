@@ -1,5 +1,6 @@
 use vector::*;
 use render::*;
+use render;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -15,23 +16,8 @@ pub struct Diamond {
 }
 
 impl Triangle {
-    pub fn neighbour(&self) -> Triangle {
-        Triangle {
-            a: self.a.clone(),
-            b: self.a.shift_(self.c.shift_back_(self.b.clone())),
-            c: self.c.clone(),
-
-            color: self.color.clone()
-        }
-    }
-
-    pub fn render(self) -> Simplex2D {
-        let brrr = self.clone();
-        Simplex2D {
-            a: Point { position: self.a, color: self.color.clone() }, //color: Color::from_vector(&brrr.a) }, //
-            b: Point { position: self.b, color: self.color.clone() }, //color: Color::from_vector(&brrr.b) }, //
-            c: Point { position: self.c, color: self.color.clone() }, //color: Color::from_vector(&brrr.c) }, //
-        }
+    pub fn opposite(&self) -> Vector {
+        self.a.shift_(self.c.shift_back_(self.b.clone()))
     }
 }
 
@@ -104,17 +90,20 @@ impl Scalable for Diamond {
     }
 }
 
-//impl Renderable for Diamond {
-//    fn positions(self) -> Vec<Vector> {
-//        vec![self.a, self.b, self.c]
-//    }
-//
-//    fn colors(self) -> Vec<Color> {
-//        vec![self.color, self.color, self.color]
-//    }
-//
-//    fn indices(self) -> Vec<u16> {
-//        vec![0, 1, 2]
-//    }
-//}
+impl Renderable for Diamond {
+    fn positions(&self) -> Vec<Vector> {
+        let mut result = self.half.positions();
+        result.push(self.half.opposite());
+        result
+    }
+
+    fn colors(&self) -> Vec<Color> {
+        let color = &self.half.color;
+        vec![color.clone(), color.clone(), color.clone(), render::RED] //debug
+    }
+
+    fn indices(&self) -> Vec<u16> {
+        vec![0, 1, 2, 0, 2, 3]
+    }
+}
 

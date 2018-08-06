@@ -1,10 +1,11 @@
 use figures::*;
 use render::*;
 use vector::*;
+use render;
 
 pub struct Tetrahedron {
     pub base: Triangle,
-    pub peak: Point
+    pub peak: Vector
 }
 
 impl Shiftable for Tetrahedron {
@@ -25,16 +26,19 @@ impl Scalable for Tetrahedron {
     }
 }
 
-//impl Renderable for Tetrahedron {
-//    fn positions(self) -> Vec<Vector> {
-//        vec![self.a, self.b, self.c]
-//    }
-//
-//    fn colors(self) -> Vec<Color> {
-//        vec![self.color, self.color, self.color]
-//    }
-//
-//    fn indices(self) -> Vec<u16> {
-//        vec![0, 1, 2]
-//    }
-//}
+impl Renderable for Tetrahedron {
+    fn positions(&self) -> Vec<Vector> {
+        let mut result = self.base.positions();
+        result.push(self.peak.clone());
+        result
+    }
+
+    fn colors(&self) -> Vec<Color> {
+        let color = &self.base.color;
+        vec![color.clone(), color.clone(), color.clone(), render::RED] //debug
+    }
+
+    fn indices(&self) -> Vec<u16> {
+        vec![0, 1, 2, 0, 1, 3, 1, 2, 3, 2, 0, 3]
+    }
+}
