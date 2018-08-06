@@ -25,17 +25,16 @@ impl Scalable for Tetrahedron {
     }
 }
 
-impl Renderable for Tetrahedron {
-
-    fn render(self) -> Vec<Simplex2D> {
-        let base = &self.base;
-        let color = &self.peak.color;
-
-        let abd = Triangle { a: base.a.clone(), b: base.b.clone(), c: self.peak.position.clone(), color: color.clone() };
-        let acd = Triangle { a: base.a.clone(), b: base.c.clone(), c: self.peak.position.clone(), color: color.clone() };
-        let bcd = Triangle { a: base.b.clone(), b: base.c.clone(), c: self.peak.position.clone(), color: color.clone() };
-
-        vec![ base.clone().render(), abd.render(), acd.render(), bcd.render() ]
-    }
-
-}
+//impl Renderable for Tetrahedron {
+//    fn positions(self) -> Vec<Vector> {
+//        vec![self.a, self.b, self.c]
+//    }
+//
+//    fn colors(self) -> Vec<Color> {
+//        vec![self.color, self.color, self.color]
+//    }
+//
+//    fn indices(self) -> Vec<u16> {
+//        vec![0, 1, 2]
+//    }
+//}

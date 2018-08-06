@@ -72,8 +72,16 @@ impl Scalable for Triangle {
 }
 
 impl Renderable for Triangle {
-    fn render(self) -> Vec<Simplex2D> {
-        vec![self.render()]
+    fn positions(&self) -> Vec<Vector> {
+        vec![self.a.clone(), self.b.clone(), self.c.clone()]
+    }
+
+    fn colors(&self) -> Vec<Color> {
+        vec![self.color.clone(), self.color.clone(), self.color.clone()]
+    }
+
+    fn indices(&self) -> Vec<u16> {
+        vec![0, 1, 2]
     }
 }
 
@@ -96,12 +104,17 @@ impl Scalable for Diamond {
     }
 }
 
-impl Renderable for Diamond {
-    fn render(self) -> Vec<Simplex2D> {
-        vec![
-            self.half.clone().render(),
-            self.half.neighbour().render()
-        ]
-    }
-}
+//impl Renderable for Diamond {
+//    fn positions(self) -> Vec<Vector> {
+//        vec![self.a, self.b, self.c]
+//    }
+//
+//    fn colors(self) -> Vec<Color> {
+//        vec![self.color, self.color, self.color]
+//    }
+//
+//    fn indices(self) -> Vec<u16> {
+//        vec![0, 1, 2]
+//    }
+//}
 

@@ -5,6 +5,12 @@ pub struct Vector {
     pub z: f32
 }
 
+impl<'a> Into<Vec<f32>> for &'a Vector {
+    fn into(self) -> Vec<f32> {
+        vec![self.x, self.y, self.z]
+    }
+}
+
 pub const ORIGIN: Vector = Vector { x: 0.0, y: 0.0, z: 0.0 };
 
 pub const INVERT: Vector = Vector { x: -1.0, y: -1.0, z: -1.0};

@@ -1,3 +1,7 @@
+use buffer;
+
+use render::Renderable;
+
 use webgl_rendering_context::{
     WebGLRenderingContext as gl,
     WebGLProgram,
@@ -44,7 +48,12 @@ pub fn establish(context: &gl) -> WebGLProgram {
     shader_program
 }
 
-pub fn associate(context: &gl, program: &WebGLProgram, attribute: &str, buffer: WebGLBuffer) {
+pub fn bind<R: Renderable>(context: &gl, program: &WebGLProgram, figure: &R) {
+    bind_attribute(context, program, "position", buffer::array(&context, &figure.positions_flat()));
+    bind_attribute(context, program, "color", buffer::array(&context, &figure.colors_flat()));
+}
+
+fn bind_attribute(context: &gl, program: &WebGLProgram, attribute: &str, buffer: WebGLBuffer) {
     context.bind_buffer(gl::ARRAY_BUFFER, Some(&buffer));
     let attribute_location = context.get_attrib_location(program, attribute) as u32;
     context.vertex_attrib_pointer(attribute_location, 3, gl::FLOAT, false, 0, 0) ;

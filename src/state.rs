@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use stdweb::web::html_element::CanvasElement;
 
 use stdweb::web::{
-    window,
+    window, HtmlElement, INode
 };
 
 use webgl_rendering_context::{
@@ -25,6 +25,10 @@ pub struct State {
     pub v_matrix: WebGLUniformLocation,
     pub m_matrix: WebGLUniformLocation,
     pub index_buffer: WebGLBuffer,
+    pub size: i32,
+
+    pub fps_div: HtmlElement,
+    pub prev: f64
 }
 
 impl State {
@@ -49,7 +53,13 @@ impl State {
         self.context.uniform_matrix4fv(Some(&self.v_matrix), false, &self.view_matrix[..]);
         self.context.uniform_matrix4fv(Some(&self.m_matrix), false, &self.mov_matrix[..]);
         self.context.bind_buffer(gl::ELEMENT_ARRAY_BUFFER, Some(&self.index_buffer));
-        self.context.draw_elements(gl::TRIANGLES, 36, gl::UNSIGNED_SHORT, 0);
+        self.context.draw_elements(gl::TRIANGLES, self.size, gl::UNSIGNED_SHORT, 0);
+
+        if !self.prev.is_nan() {
+            let time = time - self.prev;
+            self.fps_div.set_text_content(time.round().to_string().as_str());
+        }
+        self.prev = time;
 
         window().request_animation_frame(move |time| {
             rc.borrow_mut().animate(time, rc.clone());

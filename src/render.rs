@@ -9,6 +9,12 @@ pub struct Color {
     pub b: f32
 }
 
+impl<'a> Into<Vec<f32>> for &'a Color {
+    fn into(self) -> Vec<f32> {
+        vec![self.r, self.g, self.b]
+    }
+}
+
 impl Color {
     pub fn rgb(r: f32, g: f32, b: f32) -> Color {
         Color { r, g, b}
@@ -43,35 +49,24 @@ pub struct Simplex2D {
 }
 
 pub trait Renderable {
+    fn positions(&self) -> Vec<Vector>;
 
-    fn render(self) -> Vec<Simplex2D>;
+    fn colors(&self) -> Vec<Color>;
 
-}
+    fn indices(&self) -> Vec<u16>;
 
-impl Simplex2D {
-
-    pub fn encode(self) -> Vec<f32> {
-        vec![self.a.position.x, self.a.position.y, self.a.position.z,
-             self.a.color.r, self.a.color.g, self.a.color.b,
-
-             self.b.position.x, self.b.position.y, self.b.position.z,
-             self.b.color.r, self.b.color.g, self.b.color.b,
-
-             self.c.position.x, self.c.position.y, self.c.position.z,
-             self.c.color.r, self.c.color.g, self.c.color.b
-        ]
+    fn positions_flat(&self) -> Vec<f32> {
+        self.positions().iter()
+            .map(|v| { let v: Vec<f32> = v.into(); v.into_iter() })
+            .flatten().collect()
     }
 
-    pub fn encode_all(simplexes: Vec<Simplex2D>) -> Vec<f32> {
-        let mut result = vec![];
-        for simplex in simplexes {
-            result.extend(simplex.encode());
-        }
-        result
+    fn colors_flat(&self) -> Vec<f32> {
+        self.colors().iter()
+            .map(|v| { let v: Vec<f32> = v.into(); v.into_iter() })
+            .flatten().collect()
     }
-
 }
-
 
 impl Shiftable for Point {
     fn shift(&self, v: &Vector) -> Point {
