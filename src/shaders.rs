@@ -48,9 +48,9 @@ pub fn establish(context: &gl) -> WebGLProgram {
     shader_program
 }
 
-pub fn bind<R: Renderable>(context: &gl, program: &WebGLProgram, figure: &R) {
-    bind_attribute(context, program, "position", buffer::array(&context, &figure.positions_flat()));
-    bind_attribute(context, program, "color", buffer::array(&context, &figure.colors_flat()));
+pub fn bind<R: Renderable>(context: &gl, program: &WebGLProgram, scene: &R) {
+    bind_attribute(context, program, "position", buffer::array(&context, &scene.positions_flat()));
+    bind_attribute(context, program, "color", buffer::array(&context, &scene.colors_flat()));
 }
 
 fn bind_attribute(context: &gl, program: &WebGLProgram, attribute: &str, buffer: WebGLBuffer) {

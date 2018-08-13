@@ -8,6 +8,7 @@ stdweb = "0.4.7"
 stdweb-derive = "0.4.0"
 serde = "1.0.0"
 serde_derive = "1.0.0"
+itertools = "0.7.8"
 
 [build-dependencies]
 webgl_generator = "0.1.0"

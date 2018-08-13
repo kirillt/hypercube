@@ -11,10 +11,6 @@ pub struct Triangle {
     pub color: Color
 }
 
-pub struct Diamond {
-    pub half: Triangle
-}
-
 impl Triangle {
     pub fn opposite(&self) -> Vector {
         self.a.shift_(self.c.shift_back_(self.b.clone()))
@@ -72,6 +68,10 @@ impl Renderable for Triangle {
 }
 
 
+pub struct Diamond {
+    pub half: Triangle
+}
+
 impl Shiftable for Diamond {
     fn shift(&self, v: &Vector) -> Diamond {
         Diamond { half: self.half.shift(v) }
@@ -106,4 +106,3 @@ impl Renderable for Diamond {
         vec![0, 1, 2, 0, 2, 3]
     }
 }
-
