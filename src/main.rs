@@ -1,5 +1,3 @@
-#![feature(iterator_flatten)]
-
 #[macro_use]
 extern crate stdweb;
 #[macro_use]
