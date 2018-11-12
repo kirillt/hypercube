@@ -1,5 +1,5 @@
 [package]
-name = "webgl-wasm"
+name = "hypercube"
 version = "0.1.0"
 
 [dependencies]
