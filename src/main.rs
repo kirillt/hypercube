@@ -14,16 +14,20 @@ mod buffer;
 mod canvas;
 mod state;
 
-mod composition;
-mod figures;
-mod vector;
-mod render;
-mod shapes;
-mod prism;
+mod model;
+use model::vector;
+use model::figures;
+use model::shapes;
+use model::prism;
+use model::render;
+use model::render::Renderable;
+
+mod motion;
+use motion::Constant;
+use motion::animated::Animated;
 
 use render::*;
 use vector::*;
-use composition::*;
 
 use state::*;
 
@@ -62,16 +66,17 @@ fn main() {
      .shift_y(2.0)
      .shift_z(1.0);
 
-    let scene = Composition {
-        first: pyramid,
-        second: prism
-    };
+    let scene = motion::compose(Constant::new(pyramid), Constant::new(prism));
 
-    let n = scene.positions().len() as u16;
-    let m = scene.indices().iter().cloned().fold(0, u16::max);
-    js! {
-        console.log("size of scene: " + @{n});
-        console.log("max index: " + @{m});
+    {
+        //debug
+        let first_draw = scene.calculate(0);
+        let n = first_draw.positions().len() as u16;
+        let m = first_draw.indices().iter().cloned().fold(0, u16::max);
+        js! {
+            console.log("size of scene: " + @{n});
+            console.log("max index: " + @{m});
+        }
     }
 
     run(scene,

@@ -1,9 +1,27 @@
 use render::*;
 use vector::Vector;
 
+use std::rc::Rc;
+
 pub struct Composition<A: Renderable, B: Renderable> {
-    pub first: A,
-    pub second: B
+    pub first: Rc<A>,
+    pub second: Rc<B>
+}
+
+impl<A,B> Composition<A,B>
+where A: Renderable, B: Renderable {
+
+    pub fn new(first: A, second: B) -> Self {
+        Composition {
+            first: Rc::new(first),
+            second: Rc::new(second)
+        }
+    }
+
+}
+
+pub fn compose<A: Renderable, B: Renderable>(a: A, b: B) -> Composition<A,B> {
+    Composition::new(a, b)
 }
 
 impl<A,B> Renderable for Composition<A,B> where A: Renderable, B: Renderable {

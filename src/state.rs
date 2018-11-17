@@ -1,4 +1,8 @@
+use std::marker::PhantomData;
+
 use render::Renderable;
+use motion::Animated;
+
 use shaders;
 use buffer;
 use canvas;
@@ -21,12 +25,14 @@ use webgl_rendering_context::{
     WebGLBuffer
 };
 
-pub struct RenderingContext<R: Renderable> {
+pub struct RenderingContext<R: Renderable, A: Animated<R>> {
+    phantom: PhantomData<R>,
+
+    shaders: WebGLProgram,
     canvas: CanvasElement,
     context: gl,
-    shaders: WebGLProgram,
 
-    scene: R,
+    scene: A,
     rotation: [f32; 3],
     fov: f32
 }
@@ -46,21 +52,23 @@ pub struct RenderingState {
     frames: usize
 }
 
-pub fn run<R: Renderable + 'static>(scene: R,
-                          fov: f32, zoom: [f32; 3],
-                          rotation: [f32; 3]) {
+pub fn run<R: Renderable + 'static, A: Animated<R> + 'static>(scene: A,
+         fov: f32, zoom: [f32; 3],
+         rotation: [f32; 3]) {
     let canvas = canvas::establish();
     let context: gl = canvas.get_context().unwrap();
     let shaders: WebGLProgram = shaders::establish(&context);
 
     let ctx = RenderingContext {
+        phantom: PhantomData,
+
+        shaders,
         canvas,
         context,
-        shaders,
 
         scene,
         rotation,
-        fov,
+        fov
     };
 
     let state = RenderingState::new(&ctx, zoom);
@@ -70,9 +78,12 @@ pub fn run<R: Renderable + 'static>(scene: R,
 }
 
 impl RenderingState {
-    pub fn new<R: Renderable>(ctx: &RenderingContext<R>, zoom: [f32; 3]) -> Self {
+    pub fn new<R: Renderable, A: Animated<R>>(ctx: &RenderingContext<R, A>,
+            zoom: [f32; 3]) -> Self {
+        let scene = ctx.scene.calculate(0);
+
         let (index_buffer, size) = {
-            let indices = ctx.scene.indices();
+            let indices = scene.indices();
             (buffer::indices(&ctx.context, &indices), indices.len() as i32)
         };
 
@@ -97,7 +108,10 @@ impl RenderingState {
         }
     }
 
-    fn animate<R: Renderable + 'static>(&mut self, ctx: RenderingContext<R>, rc: Rc<RefCell<Self>>, time: f64) {
+    fn animate<R: Renderable + 'static, A: Animated<R> + 'static>(&mut self,
+            ctx: RenderingContext<R, A>,
+            rc: Rc<RefCell<Self>>,
+            time: f64) {
         let time = time as usize;
 
         match self.last_drawed {
@@ -114,8 +128,8 @@ impl RenderingState {
         }
         self.frames += 1;
 
-        //todo: additional model rotation can be done here
-        shaders::bind(&ctx.context, &ctx.shaders, &ctx.scene);
+        let scene = ctx.scene.calculate(time);
+        shaders::bind(&ctx.context, &ctx.shaders, &(*scene));
         ctx.context.use_program(Some(&ctx.shaders));
 
         let phase = (time % TIME_LOOP_MS) as f32 / (TIME_LOOP_MS as f32);
@@ -127,8 +141,8 @@ impl RenderingState {
 
         ctx.context.enable(gl::DEPTH_TEST);
         ctx.context.depth_func(gl::LEQUAL);
-        ctx.context.clear_color(0.5, 0.5, 0.5, 0.9);
-        ctx.context.clear_depth(1.0);
+        ctx.context.clear_color(0., 0., 0., 1.);
+        ctx.context.clear_depth(1.);
 
         let (width, height) = (ctx.canvas.width(), ctx.canvas.height());
         let projection_matrix = projection(ctx.fov, (width as f32) / (height as f32), 1., 100.);
