@@ -44,6 +44,7 @@ pub struct RenderingState {
     size: i32,
 
     fps_div: HtmlElement,
+    first_drawed: Option<usize>,
     last_drawed: Option<usize>,
     frames: usize
 }
@@ -94,6 +95,7 @@ impl RenderingState {
             size,
 
             fps_div,
+            first_drawed: None,
             last_drawed: None,
             frames: 0,
         }
@@ -113,14 +115,11 @@ impl RenderingState {
                     self.frames = 0;
                 }
             },
-            None => self.last_drawed = Some(time)
+            None => {
+                self.last_drawed = Some(time);
+            }
         }
         self.frames += 1;
-
-        let positions: Refs<Vec<Point>> = ctx.scene.positions(time);
-        let colors: Refs<Vec<Color>> = ctx.scene.colors(time);
-        shaders::bind(&ctx.context, &ctx.shaders, positions, colors);
-        ctx.context.use_program(Some(&ctx.shaders));
 
         let phase = time as f32 / TIME_UNIT_MS as f32;
 
@@ -128,6 +127,19 @@ impl RenderingState {
         rotate_x(&mut model_matrix, phase * ctx.rotation[0]);
         rotate_y(&mut model_matrix, phase * ctx.rotation[1]);
         rotate_z(&mut model_matrix, phase * ctx.rotation[2]);
+
+        let time = match self.first_drawed {
+            Some(first_drawed) => time - first_drawed,
+            None => {
+                self.first_drawed = Some(time);
+                0
+            }
+        };
+
+        let positions: Refs<Vec<Point>> = ctx.scene.positions(time);
+        let colors: Refs<Vec<Color>> = ctx.scene.colors(time);
+        shaders::bind(&ctx.context, &ctx.shaders, positions, colors);
+        ctx.context.use_program(Some(&ctx.shaders));
 
         ctx.context.enable(gl::DEPTH_TEST);
         ctx.context.depth_func(gl::LEQUAL);

@@ -19,7 +19,7 @@ mod canvas;
 mod state;
 
 use core::*;
-use motion::Animated;
+use motion::{Animated, Rotation};
 use model::figures;
 
 use state::*;
@@ -28,6 +28,7 @@ use std::f32::consts::PI;
 
 fn main() {
     let pyramid = figures::tetrahedron(unit_x(), unit_y(), unit_z(), unit(), blue(), red());
+    let pyramid = Rotation::new(pyramid, vec![PI / 3., PI /2., PI / 5.], 100);
 
     let prism = figures::prism(
             figures::triangle(unit_x(), unit_y(), unit_z(), green()),

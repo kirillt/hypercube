@@ -50,25 +50,11 @@ pub fn establish(context: &gl) -> WebGLProgram {
 
 pub fn bind(context: &gl, program: &WebGLProgram, positions: Refs<Vec<Point>>, colors: Refs<Vec<Color>>) {
     //js! { window.coordinates = performance.now(); }
-    let mut coordinates: Vec<CoordFloat> = vec![];
-    for chunk in positions.into_iter() {
-        for point in chunk.iter() {
-            for coord in point.iter() {
-                coordinates.push(*coord);
-            }
-        }
-    }
+    let coordinates = flatten_coordinates(positions);
     //js! { console.log("binding coordinates: " + (performance.now() - window.coordinates)); }
 
     //js! { window.colors = performance.now(); }
-    let mut components: Vec<ColorFloat> = vec![];
-    for chunk in colors.into_iter() {
-        for color in chunk.iter() {
-            for comp in color.iter() {
-                components.push(*comp);
-            }
-        }
-    }
+    let components = flatten_components(colors);
     //js! { console.log("binding colors: " + (performance.now() - window.colors)); }
 
     bind_attribute(context, program, "position", array_buffer(&context, &coordinates[..]));
