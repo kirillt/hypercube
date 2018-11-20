@@ -1,26 +1,12 @@
-use render::Renderable;
+use core::*;
 
-use std::rc::Rc;
+pub trait Animated {
+    fn positions(&self, time: usize) -> Refs<Vec<Point>>;
 
-pub trait Animated<R: Renderable> {
-    fn calculate(&self, time: usize) -> Rc<R>;
+    fn colors(&self, time: usize) -> Refs<Vec<Color>>;
+
+    fn indices(&self) -> Vec<u16>;
+    //todo: indices(&self, time)
+
+    fn size(&self) -> u16;
 }
-
-pub struct Constant<R> {
-    object: Rc<R>
-}
-
-impl <R: Renderable> Constant<R> {
-    pub fn new(renderable: R) -> Constant<R> {
-        Constant {
-            object: Rc::new(renderable)
-        }
-    }
-}
-
-impl <R: Renderable> Animated<R> for Constant<R> {
-    fn calculate(&self, _time: usize) -> Rc<R> {
-        self.object.clone()
-    }
-}
-

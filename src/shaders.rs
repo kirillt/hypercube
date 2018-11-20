@@ -1,6 +1,6 @@
-use buffer;
+use core::*;
 
-use render::Renderable;
+use stdweb::web::TypedArray;
 
 use webgl_rendering_context::{
     WebGLRenderingContext as gl,
@@ -48,9 +48,31 @@ pub fn establish(context: &gl) -> WebGLProgram {
     shader_program
 }
 
-pub fn bind<R: Renderable>(context: &gl, program: &WebGLProgram, scene: &R) {
-    bind_attribute(context, program, "position", buffer::array(&context, &scene.positions_flat()));
-    bind_attribute(context, program, "color", buffer::array(&context, &scene.colors_flat()));
+pub fn bind(context: &gl, program: &WebGLProgram, positions: Refs<Vec<Point>>, colors: Refs<Vec<Color>>) {
+    //js! { window.coordinates = performance.now(); }
+    let mut coordinates: Vec<CoordFloat> = vec![];
+    for chunk in positions.into_iter() {
+        for point in chunk.iter() {
+            for coord in point.iter() {
+                coordinates.push(*coord);
+            }
+        }
+    }
+    //js! { console.log("binding coordinates: " + (performance.now() - window.coordinates)); }
+
+    //js! { window.colors = performance.now(); }
+    let mut components: Vec<ColorFloat> = vec![];
+    for chunk in colors.into_iter() {
+        for color in chunk.iter() {
+            for comp in color.iter() {
+                components.push(*comp);
+            }
+        }
+    }
+    //js! { console.log("binding colors: " + (performance.now() - window.colors)); }
+
+    bind_attribute(context, program, "position", array_buffer(&context, &coordinates[..]));
+    bind_attribute(context, program, "color", array_buffer(&context, &components[..]));
 }
 
 fn bind_attribute(context: &gl, program: &WebGLProgram, attribute: &str, buffer: WebGLBuffer) {
@@ -58,4 +80,24 @@ fn bind_attribute(context: &gl, program: &WebGLProgram, attribute: &str, buffer:
     let attribute_location = context.get_attrib_location(program, attribute) as u32;
     context.vertex_attrib_pointer(attribute_location, 3, gl::FLOAT, false, 0, 0) ;
     context.enable_vertex_attrib_array(attribute_location);
+}
+
+pub fn array_buffer(context: &gl, values: &[f32]) -> WebGLBuffer {
+    let data = TypedArray::<f32>::from(values).buffer();
+
+    let buffer = context.create_buffer().unwrap();
+    context.bind_buffer(gl::ARRAY_BUFFER, Some(&buffer));
+    context.buffer_data_1(gl::ARRAY_BUFFER, Some(&data), gl::STATIC_DRAW);
+
+    buffer
+}
+
+pub fn indices_buffer(context: &gl, indices: &[u16]) -> WebGLBuffer {
+    let indices = TypedArray::<u16>::from(indices).buffer();
+
+    let index_buffer = context.create_buffer().unwrap();
+    context.bind_buffer(gl::ELEMENT_ARRAY_BUFFER, Some(&index_buffer));
+    context.buffer_data_1(gl::ELEMENT_ARRAY_BUFFER, Some(&indices), gl::STATIC_DRAW);
+
+    index_buffer
 }

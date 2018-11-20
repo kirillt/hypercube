@@ -1,50 +1,56 @@
-use render::Renderable;
-use super::Animated;
-use model;
+use core::*;
+use motion::Animated;
 
-use std::marker::PhantomData;
-use std::rc::Rc;
-
-pub struct Composition<P, Q, A, B>
-where P: Renderable, Q: Renderable,
-      A: Animated<P>, B: Animated<Q> {
-    phantom_a: PhantomData<P>,
-    phantom_b: PhantomData<Q>,
-
+pub struct Composition<A, B>
+where A: Animated, B: Animated {
     pub first: A,
     pub second: B
 }
 
-impl<P,Q,A,B> Composition<P,Q,A,B>
-where P: Renderable, Q: Renderable,
-      A: Animated<P>, B: Animated<Q> {
+impl<A, B> Animated for Composition<A,B>
+where A: Animated, B: Animated {
 
-    pub fn new(first: A, second: B) -> Self {
-        Composition {
-            phantom_a: PhantomData,
-            phantom_b: PhantomData,
+    fn positions(&self, time: usize) -> Refs<Vec<Point>> {
+        let mut result = self.first.positions(time);
+        let mut other = self.second.positions(time);
+        result.append(&mut other);
+        result
+    }
 
-            first,
-            second
-        }
+    fn colors(&self, time: usize) -> Refs<Vec<Color>> {
+        let mut result = self.first.colors(time);
+        let mut other = self.second.colors(time);
+        result.append(&mut other);
+        result
+    }
+
+    fn indices(&self) -> Vec<u16> {
+        let k = self.first.size();
+        let mut result = self.first.indices();
+
+        let mut second: Vec<u16> =
+            self.second.indices().into_iter()
+                .map(move |i| i + k)
+                .collect();
+
+        result.append(&mut second);
+        result
+    }
+
+    fn size(&self) -> u16 {
+        self.first.size() + self.second.size()
     }
 }
 
-pub fn compose<P: Renderable, Q: Renderable,
-               A: Animated<P>, B: Animated<Q>>
-        (a: A, b: B) -> Composition<P,Q,A,B> {
+impl<A, B> Composition<A,B>
+where A: Animated, B: Animated {
+
+    fn new(a: A, b: B) -> Self {
+        Composition { first: a, second: b }
+    }
+
+}
+
+pub fn compose<A: Animated, B: Animated>(a: A, b: B) -> Composition<A,B> {
     Composition::new(a, b)
-}
-
-impl<P, Q, A, B> Animated<model::Composition<P,Q>> for Composition<P,Q,A,B>
-where P: Renderable, Q: Renderable,
-      A: Animated<P>, B: Animated<Q> {
-
-    fn calculate(&self, time: usize) -> Rc<model::Composition<P,Q>> {
-        Rc::new(model::Composition {
-            first: self.first.calculate(time),
-            second: self.second.calculate(time)
-        })
-    }
-
 }

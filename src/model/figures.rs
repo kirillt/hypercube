@@ -1,108 +1,83 @@
-use vector::*;
-use render::*;
-use render;
+use core::{Point, Color};
+use model::Snapshot;
 
-#[derive(Clone)]
-pub struct Triangle {
-    pub a: Vector,
-    pub b: Vector,
-    pub c: Vector,
+use itertools::Itertools;
+use std::rc::Rc;
 
-    pub color: Color
-}
-
-impl Triangle {
-    pub fn opposite(&self) -> Vector {
-        self.a.shift_(self.c.shift_back_(self.b.clone()))
+pub fn triangle(a: Point, b: Point, c: Point, color: Color) -> Snapshot {
+    Snapshot {
+        positions: Rc::new(vec![a, b, c]),
+        colors: Rc::new(vec![color, color.clone(), color.clone()]),
+        indices: vec![0, 1, 2],
+        size: 3
     }
 }
 
-impl Shiftable for Triangle {
-    fn shift(&self, v: &Vector) -> Triangle {
-        Triangle {
-            a: self.a.shift(v),
-            b: self.b.shift(v),
-            c: self.c.shift(v),
-
-            color: self.color.clone()
-        }
+#[allow(dead_code)]
+pub fn diamond(a: Point, b: Point, c: Point, d: Point,
+               color_abc: Color, color_bcd: Color) -> Snapshot {
+    Snapshot {
+        positions: Rc::new(vec![a, b, c, d]),
+        colors: Rc::new(vec![color_abc.clone(), color_abc.clone(), color_abc, color_bcd]),
+        indices: vec![0, 1, 2, 1, 2, 3],
+        size: 4
     }
 }
 
-impl Rotatable for Triangle {
-    fn rotate(&self, v: &Vector) -> Triangle {
-        Triangle {
-            a: self.a.rotate(v),
-            b: self.b.rotate(v),
-            c: self.c.rotate(v),
-
-            color: self.color.clone()
-        }
+pub fn tetrahedron(a: Point, b: Point, c: Point, d: Point,
+                   color_base: Color, color_peak: Color) -> Snapshot {
+    Snapshot {
+        positions: Rc::new(vec![a, b, c, d]),
+        colors: Rc::new(vec![color_base.clone(), color_base.clone(), color_base, color_peak]),
+        indices: vec![0, 1, 2, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        size: 4
     }
 }
 
-impl Scalable for Triangle {
-    fn scale(&self, v: &Vector) -> Triangle {
-        Triangle {
-            a: self.a.scale(v),
-            b: self.b.scale(v),
-            c: self.c.scale(v),
-
-            color: self.color.clone()
-        }
-    }
-}
-
-impl Renderable for Triangle {
-    fn positions(&self) -> Vec<Vector> {
-        vec![self.a.clone(), self.b.clone(), self.c.clone()]
+pub fn prism(bottom: Snapshot, top: Snapshot) -> Snapshot {
+    let n = bottom.size;
+    if n != top.size {
+        panic!("Can't attach top to bottom of different amount of vertices");
     }
 
-    fn colors(&self) -> Vec<Color> {
-        vec![self.color.clone(), self.color.clone(), self.color.clone()]
+    let n = n as u16;
+
+    let mut positions = Rc::try_unwrap(bottom.positions).unwrap();
+    positions.append(&mut Rc::try_unwrap(top.positions).unwrap());
+
+    let mut colors = Rc::try_unwrap(bottom.colors).unwrap();
+    colors.append(&mut Rc::try_unwrap(top.colors).unwrap());
+
+    let mut indices = bottom.indices;
+
+    fn renumerate(n: u16, iter: impl Iterator<Item=u16>) -> impl Iterator<Item=u16> {
+        iter.map(move |i| i + n)
     }
 
-    fn indices(&self) -> Vec<u16> {
-        vec![0, 1, 2]
-    }
-}
+    let mut top: Vec<u16> = renumerate(n, top.indices.into_iter())
+            .collect();
 
+    indices.append(&mut top);
 
-pub struct Diamond {
-    pub half: Triangle
-}
+    let mut edges: Vec<(u16, u16)> = (0..n)
+        .zip(renumerate(n, 0..n))
+        .collect();
+    edges.push((0, n));
 
-impl Shiftable for Diamond {
-    fn shift(&self, v: &Vector) -> Diamond {
-        Diamond { half: self.half.shift(v) }
-    }
-}
+    for ((a,b),(c,d)) in edges.into_iter().tuple_windows() {
+        indices.push(a);
+        indices.push(c);
+        indices.push(d);
 
-impl Rotatable for Diamond {
-    fn rotate(&self, v: &Vector) -> Diamond {
-        Diamond { half: self.half.rotate(v) }
-    }
-}
-
-impl Scalable for Diamond {
-    fn scale(&self, v: &Vector) -> Diamond {
-        Diamond { half: self.half.scale(v) }
-    }
-}
-
-impl Renderable for Diamond {
-    fn positions(&self) -> Vec<Vector> {
-        let mut result = self.half.positions();
-        result.push(self.half.opposite());
-        result
+        indices.push(a);
+        indices.push(b);
+        indices.push(d);
     }
 
-    fn colors(&self) -> Vec<Color> {
-        let color = &self.half.color;
-        vec![color.clone(), color.clone(), color.clone(), render::RED] //debug
-    }
-
-    fn indices(&self) -> Vec<u16> {
-        vec![0, 1, 2, 0, 2, 3]
+    Snapshot {
+        positions: Rc::new(positions),
+        colors: Rc::new(colors),
+        indices,
+        size: n + n
     }
 }

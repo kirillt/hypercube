@@ -1,11 +1,9 @@
-use std::marker::PhantomData;
-
-use render::Renderable;
 use motion::Animated;
 
 use shaders;
-use buffer;
 use canvas;
+
+use core::*;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -25,9 +23,7 @@ use webgl_rendering_context::{
     WebGLBuffer
 };
 
-pub struct RenderingContext<R: Renderable, A: Animated<R>> {
-    phantom: PhantomData<R>,
-
+pub struct RenderingContext<A: Animated> {
     shaders: WebGLProgram,
     canvas: CanvasElement,
     context: gl,
@@ -52,7 +48,7 @@ pub struct RenderingState {
     frames: usize
 }
 
-pub fn run<R: Renderable + 'static, A: Animated<R> + 'static>(scene: A,
+pub fn run<A: Animated + 'static>(scene: A,
          fov: f32, zoom: [f32; 3],
          rotation: [f32; 3]) {
     let canvas = canvas::establish();
@@ -60,8 +56,6 @@ pub fn run<R: Renderable + 'static, A: Animated<R> + 'static>(scene: A,
     let shaders: WebGLProgram = shaders::establish(&context);
 
     let ctx = RenderingContext {
-        phantom: PhantomData,
-
         shaders,
         canvas,
         context,
@@ -78,13 +72,10 @@ pub fn run<R: Renderable + 'static, A: Animated<R> + 'static>(scene: A,
 }
 
 impl RenderingState {
-    pub fn new<R: Renderable, A: Animated<R>>(ctx: &RenderingContext<R, A>,
-            zoom: [f32; 3]) -> Self {
-        let scene = ctx.scene.calculate(0);
-
+    pub fn new<A: Animated>(ctx: &RenderingContext<A>, zoom: [f32; 3]) -> Self {
         let (index_buffer, size) = {
-            let indices = scene.indices();
-            (buffer::indices(&ctx.context, &indices), indices.len() as i32)
+            let indices = ctx.scene.indices();
+            (shaders::indices_buffer(&ctx.context, &indices), indices.len() as i32)
         };
 
         let fps_div: HtmlElement = document()
@@ -108,10 +99,8 @@ impl RenderingState {
         }
     }
 
-    fn animate<R: Renderable + 'static, A: Animated<R> + 'static>(&mut self,
-            ctx: RenderingContext<R, A>,
-            rc: Rc<RefCell<Self>>,
-            time: f64) {
+    fn animate<A: Animated + 'static>(&mut self, ctx: RenderingContext<A>,
+                                      rc: Rc<RefCell<Self>>, time: f64) {
         let time = time as usize;
 
         match self.last_drawed {
@@ -128,11 +117,12 @@ impl RenderingState {
         }
         self.frames += 1;
 
-        let scene = ctx.scene.calculate(time);
-        shaders::bind(&ctx.context, &ctx.shaders, &(*scene));
+        let positions: Refs<Vec<Point>> = ctx.scene.positions(time);
+        let colors: Refs<Vec<Color>> = ctx.scene.colors(time);
+        shaders::bind(&ctx.context, &ctx.shaders, positions, colors);
         ctx.context.use_program(Some(&ctx.shaders));
 
-        let phase = (time % TIME_LOOP_MS) as f32 / (TIME_LOOP_MS as f32);
+        let phase = time as f32 / TIME_UNIT_MS as f32;
 
         let mut model_matrix = self.model_matrix.clone();
         rotate_x(&mut model_matrix, phase * ctx.rotation[0]);
@@ -162,7 +152,7 @@ impl RenderingState {
 }
 
 const FPS_DELTA_MS: usize = 300;
-const TIME_LOOP_MS: usize = 60_000;
+const TIME_UNIT_MS: usize = 60_000;
 
 const ID_MATRIX: [f32; 16] = [1.,0.,0.,0.,  0.,1.,0.,0.,  0.,0.,1.,0.,  0.,0.,0.,1.];
 
