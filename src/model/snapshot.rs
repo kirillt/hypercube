@@ -32,30 +32,37 @@ impl Animated for Snapshot {
 #[allow(dead_code)]
 impl Snapshot {
     pub fn scale_eq(self, factor: CoordFloat) -> Snapshot {
-        self.scale(Vector::new(factor, factor, factor))
+        self.scale(Vector::new(factor, factor, factor, factor))
+    }
+    pub fn scale_w(self, factor: CoordFloat) -> Snapshot {
+        self.scale(Vector::new(factor, 1., 1., 1.))
     }
     pub fn scale_x(self, factor: CoordFloat) -> Snapshot {
-        self.scale(Vector::new(factor, 1., 1.))
+        self.scale(Vector::new(1., factor, 1., 1.))
     }
     pub fn scale_y(self, factor: CoordFloat) -> Snapshot {
-        self.scale(Vector::new(1., factor, 1.))
+        self.scale(Vector::new(1., 1., factor, 1.))
     }
     pub fn scale_z(self, factor: CoordFloat) -> Snapshot {
-        self.scale(Vector::new(1., 1., factor))
+        self.scale(Vector::new(1., 1., 1., factor))
     }
     pub fn scale(self, factors: Vector) -> Snapshot {
+        assert!(factors.len() == 4);
         self.map_positions(&|point|
             point.coords.component_mul(&factors).into())
     }
 
+    pub fn shift_w(self, offset: CoordFloat) -> Snapshot {
+        self.shift(Vector::new(offset, 0., 0., 0.))
+    }
     pub fn shift_x(self, offset: CoordFloat) -> Snapshot {
-        self.shift(Vector::new(offset, 0., 0.))
+        self.shift(Vector::new(0., offset, 0., 0.))
     }
     pub fn shift_y(self, offset: CoordFloat) -> Snapshot {
-        self.shift(Vector::new(0., offset, 0.))
+        self.shift(Vector::new(0., 0., offset, 0.))
     }
     pub fn shift_z(self, offset: CoordFloat) -> Snapshot {
-        self.shift(Vector::new(0., 0., offset))
+        self.shift(Vector::new(0., 0., 0., offset))
     }
     pub fn shift(self, offset: Vector) -> Snapshot {
         self.map_positions(&|point| point + offset)

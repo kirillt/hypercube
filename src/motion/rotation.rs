@@ -17,8 +17,6 @@ impl<A: Animated> Animated for Rotation<A> {
         let elapsed = {
             time - *self.last_rendered.borrow()
         };
-//        let debug1 = format!("{}", elapsed);
-//        js! { console.log("elapsed: " + @{debug1}); }
 
         let result = if elapsed < self.threshold_ms {
             self.positions.borrow().clone()
@@ -27,12 +25,9 @@ impl<A: Animated> Animated for Rotation<A> {
                 .map(|a| a * (time as CoordFloat / 1000.))
                 .collect();
 
-            let debug2 = format!("{:?}", angles);
-            js! { console.log("angles: " + @{debug2}); }
-
             let transformation = rotation_matrix(angles);
 
-            let points =
+            let points: Vec<Point> =
                 clone_points(self.object.positions(time))
                 .into_iter()
                 .map(|p| transformation * p)
@@ -63,7 +58,7 @@ impl<A: Animated> Animated for Rotation<A> {
 
 impl<A: Animated> Rotation<A> {
     pub fn new(object: A, angles: Vec<CoordFloat>, fps_limit: usize) -> Self {
-        assert!(angles.len() == 3);
+        assert!(angles.len() == 6);
         Rotation {
             angles,
             threshold_ms: 1000 / fps_limit,
@@ -76,29 +71,59 @@ impl<A: Animated> Rotation<A> {
     }
 }
 
-pub fn rotation_matrix(angles: Vec<CoordFloat>) -> Matrix3 {
-    assert!(angles.len() == 3);
-    let angle_x = angles[0];
-    let angle_y = angles[1];
-    let angle_z = angles[2];
+pub fn rotation_matrix(angles: Vec<CoordFloat>) -> Matrix4 {
+    assert!(angles.len() == 6);
+    let angle_wx = angles[0];
+    let angle_wy = angles[1];
+    let angle_wz = angles[2];
+    let angle_xy = angles[3];
+    let angle_xz = angles[4];
+    let angle_yz = angles[5];
 
-    let transformation_x = Matrix3::new(
-        1.,            0.,                  0.,
-        0., angle_x.cos(), -1. * angle_x.sin(),
-        0., angle_x.sin(),       angle_x.cos()
-    );
+    let transformation_wx = Matrix4::new(
+        1.,  0.,             0.,                   0.,
+        0.,  1.,             0.,                   0.,
+        0.,  0., angle_wx.cos(), -1. * angle_wx.sin(),
+        0.,  0., angle_wx.sin(),       angle_wx.cos()
+    ); //yz
 
-    let transformation_y = Matrix3::new(
-        angle_y.cos(), 0., angle_y.sin(),
-        0., 1.,            0.,
-        -1. * angle_y.sin(), 0., angle_y.cos()
-    );
+    let transformation_wy = Matrix4::new(
+        1.,             0., 0.,                   0.,
+        0., angle_wy.cos(), 0., -1. * angle_wy.sin(),
+        0.,             0., 1.,                   0.,
+        0., angle_wy.sin(), 0.,       angle_wy.cos()
+    ); //xz
 
-    let transformation_z = Matrix3::new(
-        angle_z.cos(), -1. * angle_z.sin(), 0.,
-        angle_z.sin(),       angle_z.cos(), 0.,
-        0.,                  0., 1.
-    );
+    let transformation_wz = Matrix4::new(
+        1.,             0.,                   0., 0.,
+        0., angle_wz.cos(), -1. * angle_wz.sin(), 0.,
+        0., angle_wz.sin(),       angle_wz.cos(), 0.,
+        0.,             0.,                   0., 1.,
+    ); //xy
 
-    transformation_x * transformation_y * transformation_z
+    let transformation_xy = Matrix4::new(
+        angle_xy.cos(), 0., 0., -1. * angle_xy.sin(),
+                    0., 1., 0.,                   0.,
+                    0., 0., 1.,                   0.,
+        angle_xy.sin(), 0., 0.,       angle_xy.cos()
+    ); //wz
+
+    let transformation_xz = Matrix4::new(
+        angle_xz.cos(), 0., -1. * angle_xz.sin(), 0.,
+                    0., 1.,                   0., 0.,
+        angle_xz.sin(), 0.,       angle_xz.cos(), 0.,
+                    0., 0.,                   0., 1.
+    ); //wy
+
+    let transformation_yz = Matrix4::new(
+        angle_yz.cos(), -1. * angle_yz.sin(), 0., 0.,
+        angle_yz.sin(),       angle_yz.cos(), 0., 0.,
+                    0.,                   0., 1., 0.,
+                    0.,                   0., 0., 1.
+    ); //wx
+
+
+    transformation_wx * transformation_wy * transformation_wz *
+        transformation_xy * transformation_xz *
+        transformation_yz
 }
