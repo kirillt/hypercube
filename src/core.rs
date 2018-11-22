@@ -5,6 +5,7 @@ pub type CoordFloat = f32;
 pub type Vector = Vector4<CoordFloat>;
 pub type Point = Point4<CoordFloat>;
 
+pub fn origin() -> Point { Point::origin() }
 pub fn unit_xyz() -> Point { Point::new(0., 1., 1., 1.) }
 pub fn unit_w() -> Point { Point::new(1., 0., 0., 0.) }
 pub fn unit_x() -> Point { Point::new(0., 1., 0., 0.) }
@@ -18,9 +19,18 @@ pub type Color = Point3<ColorFloat>;
 pub fn red() -> Color { Color::new(1., 0., 0.) }
 pub fn green() -> Color { Color::new(0., 1., 0.) }
 pub fn blue() -> Color { Color::new(0., 0., 1.) }
+pub fn white() -> Color { Color::new(1., 1., 1.) }
+pub fn yellow() -> Color { Color::new(1., 1., 0.) }
 
 pub type Matrix4 = Matrix<CoordFloat, U4, U4,
     MatrixArray<CoordFloat, U4, U4>>;
+
+pub fn scale(factor: CoordFloat) -> Matrix4 {
+    Matrix4::new(factor, 0.,     0.,     0.,
+                 0.,     factor, 0.,     0.,
+                 0.,     0.,     factor, 0.,
+                 0.,     0.,     0.,     factor)
+}
 
 pub type Refs<T> = Vec<Rc<T>>;
 
@@ -66,4 +76,12 @@ pub fn flatten_components(refs: Refs<Vec<Color>>) -> Vec<ColorFloat> {
         }
     }
     components_flat
+}
+
+pub fn js_assert(condition: bool, message: String) {
+    if !condition {
+        js! {
+            console.error(@{message});
+        }
+    }
 }

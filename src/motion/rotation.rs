@@ -26,6 +26,7 @@ impl<A: Animated> Animated for Rotation<A> {
                 .collect();
 
             let transformation = rotation_matrix(angles);
+            //possible to optimize with usage of state
 
             let points: Vec<Point> =
                 clone_points(self.object.positions(time))
@@ -57,7 +58,16 @@ impl<A: Animated> Animated for Rotation<A> {
 }
 
 impl<A: Animated> Rotation<A> {
-    pub fn new(object: A, angles: Vec<CoordFloat>, fps_limit: usize) -> Self {
+    pub fn d3(object: A, mut angles: Vec<CoordFloat>, fps_limit: usize) -> Self {
+        assert!(angles.len() == 3);
+        angles.push(0.);
+        angles.push(0.);
+        angles.push(0.);
+
+        Rotation::d4(object, angles, fps_limit)
+    }
+
+    pub fn d4(object: A, angles: Vec<CoordFloat>, fps_limit: usize) -> Self {
         assert!(angles.len() == 6);
         Rotation {
             angles,
@@ -69,6 +79,18 @@ impl<A: Animated> Rotation<A> {
             object
         }
     }
+}
+
+pub fn rotation_matrix_x(angle: CoordFloat) -> Matrix4 {
+    rotation_matrix(vec![angle, 0., 0., 0., 0., 0.])
+}
+
+pub fn rotation_matrix_y(angle: CoordFloat) -> Matrix4 {
+    rotation_matrix(vec![0., angle, 0., 0., 0., 0.])
+}
+
+pub fn rotation_matrix_z(angle: CoordFloat) -> Matrix4 {
+    rotation_matrix(vec![0., 0., angle, 0., 0., 0.])
 }
 
 pub fn rotation_matrix(angles: Vec<CoordFloat>) -> Matrix4 {

@@ -27,30 +27,43 @@ use state::*;
 use std::f32::consts::PI;
 
 fn main() {
-    let pyramid = figures::tetrahedron(unit_x(), unit_y(), unit_z(), unit_xyz(), blue(), red());
-    let pyramid = Rotation::new(pyramid, vec![PI / 2., PI / 3., PI / 5., 0., 0., 0.], 100);
+//    let pyramid = figures::tetrahedron(unit_x(), unit_y(), unit_z(), unit_xyz(), blue(), red());
+//    let pyramid = Rotation::d3(pyramid, vec![PI / 2., PI / 3., PI / 5.], 100);
+//
+//    let frustum = figures::tower(
+//            figures::triangle(unit_x(), unit_y(), unit_z(), red()),
+//            figures::triangle(unit_x() * 3., unit_y() * 3., unit_z() * 3., green()))
+//        .scale_eq(0.3)
+//        .shift_y(2.0)
+//        .shift_z(1.0);
+//
+//    let scene = motion::compose(pyramid, frustum);
+//    let scene = Rotation::d3(scene, vec![PI / 2., PI / 3., PI / 5.], 100);
+//
+//    let circle = figures::circle_xy(origin(), 1., yellow(), 81).scale_eq(0.1);
+//    let circle = Rotation::d3(circle, vec![0., 0., PI / 9.], 100);
+//    let scene = motion::compose(scene, circle);
 
-    let prism = figures::prism(
-            figures::triangle(unit_x(), unit_y(), unit_z(), green()),
-            figures::triangle(unit_x() * 3., unit_y() * 3., unit_z() * 3., red()))
-        .scale_eq(0.3)
-        .shift_y(2.0)
-        .shift_z(1.0);
-
-    let scene = motion::compose(pyramid, prism);
+    let scene = figures::sphere_xyz(origin(), 1., yellow(), 6);
 
     {
         //debug
-        let n = scene.size();
-        let m = scene.indices().iter().cloned().fold(0, u16::max);
+        let total = scene.size();
+        let max_index = scene.indices().iter().cloned().fold(0, u16::max);
+        let triangles = (scene.indices().len() / 3) as u32;
+        let remainder = (scene.indices().len() % 3) as u32;
         js! {
             console.log("points of scene: " + @{format!("{:?}", scene.positions(0))});
-            console.log("size of scene: " + @{n});
-            console.log("max index: " + @{m});
+            console.log("size of scene: " + @{total});
+            console.log("max index: " + @{max_index});
+            console.log("triangles: " + @{triangles});
+            console.log("non matched points: " + @{remainder});
         }
+        js_assert(remainder == 0, "triangulation looks broken".to_string());
     }
 
     run(scene,
         40., [0., 0., -6.],
+//        [0., 0., 0.]);
         [15. * PI, 10. * PI, 5. * PI]);
 }
