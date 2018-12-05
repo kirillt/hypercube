@@ -17,10 +17,16 @@ pub type ColorFloat = f32;
 pub type Color = Point3<ColorFloat>;
 
 pub fn red() -> Color { Color::new(1., 0., 0.) }
-pub fn green() -> Color { Color::new(0., 1., 0.) }
-pub fn blue() -> Color { Color::new(0., 0., 1.) }
-pub fn white() -> Color { Color::new(1., 1., 1.) }
 pub fn yellow() -> Color { Color::new(1., 1., 0.) }
+pub fn green() -> Color { Color::new(0., 1., 0.) }
+pub fn cyan() -> Color { Color::new(0., 1., 1.) }
+pub fn blue() -> Color { Color::new(0., 0., 1.) }
+pub fn purple() -> Color { Color::new(1., 0., 1.) }
+pub fn white() -> Color { Color::new(1., 1., 1.) }
+
+pub fn mix(a: Color, b: Color, grade: ColorFloat) -> Color {
+    Color::from(a.coords * (1. - grade) + b.coords * grade)
+}
 
 pub type Matrix4 = Matrix<CoordFloat, U4, U4,
     MatrixArray<CoordFloat, U4, U4>>;
@@ -84,4 +90,8 @@ pub fn js_assert(condition: bool, message: String) {
             console.error(@{message});
         }
     }
+}
+
+pub fn js_log(message: String) {
+    js! { console.log(@{message}); }
 }

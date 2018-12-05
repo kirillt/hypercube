@@ -17,6 +17,7 @@ const VERTEX_SHADER: &str = r#"
         varying vec3 vColor;
 
         void main() {
+            gl_PointSize = 10.;
             gl_Position = Pmatrix*Vmatrix*Mmatrix*vec4(position, 1.);
             vColor = color;
         }
