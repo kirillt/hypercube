@@ -20,35 +20,32 @@ mod state;
 
 use core::*;
 use motion::{Animated, Rotation};
+use model::wireframe;
+use model::combine;
 use model::figures;
 
 use state::*;
-
-use std::f32::consts::PI;
 
 fn main() {
     let pyramid = figures::tetrahedron(unit_x(), unit_y(), unit_z(), unit_xyz(), blue(), red());
     let pyramid = Rotation::d3(pyramid, vec![PI / 2., PI / 3., PI / 5.], 60);
 
-    let frustum = figures::tower(
+    let frustum = combine::tower(
             figures::triangle(unit_x(), unit_y(), unit_z(), red()),
             figures::triangle(unit_x() * 3., unit_y() * 3., unit_z() * 3., green()))
         .scale_eq(0.3)
         .shift_y(2.0)
         .shift_z(1.0);
 
-    let scene = motion::compose(pyramid, frustum);
-    let scene = Rotation::d3(scene, vec![PI / 2., PI / 3., PI / 5.], 60);
+    let objects = Rotation::d3(motion::compose(pyramid, frustum), vec![PI / 2., PI / 3., PI / 5.], 60);
 
-    let ball = figures::sphere_xyz_colored(origin(), 1., 24,
-                                           blue(), yellow(), red())
-        .scale_eq(0.15)
-        .shift_x(-3.0)
-        .shift_y(1.0)
-        .shift_z(-2.0);
-    let ball = Rotation::d3(ball, vec![PI / 7., PI / 5., PI / 3.], 60);
+    let axis = combine::merge_group(vec![
+        wireframe::stick_x(0.01, 32.0, (black(), red()), 6),
+        wireframe::stick_y(0.01, 32.0, (black(), blue()), 6),
+        wireframe::stick_z(0.01, 32.0, (black(), green()), 6),
+    ]);
 
-    let scene = motion::compose(scene, ball);
+    let scene = motion::compose(axis, objects);
 
     {
         //debug
@@ -63,7 +60,7 @@ fn main() {
             console.log("triangles: " + @{triangles});
             console.log("non matched points: " + @{remainder});
         }
-        js_assert(remainder == 0, "triangulation looks broken".to_string());
+        js_assert(remainder == 0, false, "triangulation looks broken".to_string());
     }
 
     run(scene,

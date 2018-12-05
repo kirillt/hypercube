@@ -1,13 +1,7 @@
 use core::*;
 use model::Snapshot;
-use motion::rotation::{
-    rotation_matrix_x,
-    rotation_matrix_y,
-    rotation_matrix_z
-};
+use model::transform::*;
 
-use itertools::Itertools;
-use std::f32::consts::PI;
 use std::rc::Rc;
 
 pub fn triangle(a: Point, b: Point, c: Point, color: Color) -> Snapshot {
@@ -42,7 +36,7 @@ pub fn tetrahedron(a: Point, b: Point, c: Point, d: Point,
 
 pub fn circle_xy(center: Point, radius: CoordFloat, color: Color, detailing: u16) -> Snapshot {
     let k = detailing;
-    js_assert(k > 2, format!("impossible to build circle with detailing {}", k));
+    js_assert(k > 2, false, format!("impossible to build circle with detailing {}", k));
 
     let angle = 2. * PI / (k as CoordFloat);
     let rotation = rotation_matrix_z(angle);
@@ -85,7 +79,7 @@ pub fn sphere_xyz(center: Point, radius: CoordFloat, color: Color, detailing: u1
 pub fn sphere_xyz_colored(center: Point, radius: CoordFloat, detailing: u16,
                           color_north: Color, color_equator: Color, color_south: Color) -> Snapshot {
     let k = detailing;
-    js_assert(k > 0 && k % 2 == 0 && k % 3 == 0,
+    js_assert(k > 0 && k % 2 == 0 && k % 3 == 0, false,
               format!("impossible to build sphere with detailing {}", k));
 
     let ry = scale(radius) * unit_y().coords;
@@ -166,7 +160,7 @@ pub fn sphere_xyz_colored(center: Point, radius: CoordFloat, detailing: u16,
     }
 
     let size = points.len() as u16;
-    js_assert(size == m * k + 2, format!("wrong size of sphere: {}", size));
+    js_assert(size == m * k + 2, false, format!("wrong size of sphere: {}", size));
 
     Snapshot {
         positions: Rc::new(points),
@@ -174,58 +168,4 @@ pub fn sphere_xyz_colored(center: Point, radius: CoordFloat, detailing: u16,
         indices: indices,
         size
     }
-}
-
-pub fn tower(bottom: Snapshot, top: Snapshot) -> Snapshot {
-    let n = bottom.size;
-    if n != top.size {
-        panic!("Can't attach top to bottom of different amount of vertices");
-    }
-
-    let n = n as u16;
-
-    let mut positions = Rc::try_unwrap(bottom.positions).unwrap();
-    positions.append(&mut Rc::try_unwrap(top.positions).unwrap());
-
-    let mut colors = Rc::try_unwrap(bottom.colors).unwrap();
-    colors.append(&mut Rc::try_unwrap(top.colors).unwrap());
-
-    let mut indices = bottom.indices;
-
-    fn renumerate(n: u16, iter: impl Iterator<Item=u16>) -> impl Iterator<Item=u16> {
-        iter.map(move |i| i + n)
-    }
-
-    let mut top: Vec<u16> = renumerate(n, top.indices.into_iter())
-            .collect();
-
-    indices.append(&mut top);
-
-    let mut edges: Vec<(u16, u16)> = (0..n)
-        .zip(renumerate(n, 0..n))
-        .collect();
-    edges.push((0, n));
-
-    for ((a,b),(c,d)) in edges.into_iter().tuple_windows() {
-        push_triangle(&mut indices, a, c, d);
-        push_triangle(&mut indices, a, b, d);
-    }
-
-    Snapshot {
-        positions: Rc::new(positions),
-        colors: Rc::new(colors),
-        indices,
-        size: n + n
-    }
-}
-
-fn push_square(indices: &mut Vec<u16>, a: u16, b: u16, c: u16, d: u16) {
-    push_triangle(indices, a, b, c);
-    push_triangle(indices, b, c, d);
-}
-
-fn push_triangle(indices: &mut Vec<u16>, a: u16, b: u16, c: u16) {
-    indices.push(a);
-    indices.push(b);
-    indices.push(c);
 }

@@ -1,5 +1,6 @@
 use core::*;
 use motion::animated::Animated;
+use model::transform::*;
 
 use std::rc::Rc;
 
@@ -68,6 +69,21 @@ impl Snapshot {
         self.map_positions(&|point| point + offset)
     }
 
+    pub fn turn_around_x(self, angle: CoordFloat) -> Snapshot {
+        let rotation = rotation_matrix_x(angle);
+        self.map_positions(&|point| rotation * point)
+    }
+
+    pub fn turn_around_y(self, angle: CoordFloat) -> Snapshot {
+        let rotation = rotation_matrix_y(angle);
+        self.map_positions(&|point| rotation * point)
+    }
+
+    pub fn turn_around_z(self, angle: CoordFloat) -> Snapshot {
+        let rotation = rotation_matrix_z(angle);
+        self.map_positions(&|point| rotation * point)
+    }
+
     pub fn map_positions(self, transform: &Fn(Point) -> Point) -> Snapshot {
         let chunks = Rc::try_unwrap(self.positions)
             .unwrap();
@@ -81,6 +97,15 @@ impl Snapshot {
             positions: Rc::new(positions),
             colors: self.colors,
             indices: self.indices,
+            size: self.size
+        }
+    }
+
+    pub fn duplicate(self) -> Snapshot {
+        Snapshot {
+            positions: Rc::new((*self.positions).clone()),
+            colors: Rc::new((*self.colors).clone()),
+            indices: self.indices.clone(),
             size: self.size
         }
     }

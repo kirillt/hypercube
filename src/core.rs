@@ -1,6 +1,8 @@
 use nalgebra::{Point3, Point4, Vector4, Matrix, MatrixArray, U4};
 use std::rc::Rc;
 
+pub use std::f32::consts::PI;
+
 pub type CoordFloat = f32;
 pub type Vector = Vector4<CoordFloat>;
 pub type Point = Point4<CoordFloat>;
@@ -16,6 +18,7 @@ pub fn unit() -> Point { Point::new(1., 1., 1., 1.) }
 pub type ColorFloat = f32;
 pub type Color = Point3<ColorFloat>;
 
+pub fn black() -> Color { Color::new(0., 0., 0.) }
 pub fn red() -> Color { Color::new(1., 0., 0.) }
 pub fn yellow() -> Color { Color::new(1., 1., 0.) }
 pub fn green() -> Color { Color::new(0., 1., 0.) }
@@ -84,12 +87,28 @@ pub fn flatten_components(refs: Refs<Vec<Color>>) -> Vec<ColorFloat> {
     components_flat
 }
 
-pub fn js_assert(condition: bool, message: String) {
+pub fn push_square(indices: &mut Vec<u16>, a: u16, b: u16, c: u16, d: u16) {
+    push_triangle(indices, a, b, c);
+    push_triangle(indices, b, c, d);
+}
+
+pub fn push_triangle(indices: &mut Vec<u16>, a: u16, b: u16, c: u16) {
+    indices.push(a);
+    indices.push(b);
+    indices.push(c);
+}
+
+pub fn js_assert(condition: bool, strict: bool, message: String) {
     if !condition {
-        js! {
-            console.error(@{message});
+        js_error(message);
+        if strict {
+            panic!("Assertion failed");
         }
     }
+}
+
+pub fn js_error(message: String) {
+    js! { console.error(@{message}); }
 }
 
 pub fn js_log(message: String) {
