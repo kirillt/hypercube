@@ -12,6 +12,18 @@
 				overflow: hidden;
 			}
 
+			#info {
+				position: absolute;
+				z-index: 1;
+
+				font-family: monospace;
+				font-size: 12px;
+				color: yellow;
+
+				left: 10px;
+				top: 1%;
+			}
+
 			#fps {
 				position: absolute;
 				z-index: 1;
@@ -28,6 +40,22 @@
 	<body>
 		<canvas id="frame"></canvas>
 		<script src="js/app.js"></script>
-	<div id="fps"></div>
+		<div id="info">
+			[space] toggles scene animation
+			<br>
+			[enter] toggles camera rotation
+		</div>
+		<div id="fps"></div>
 	</body>
+
+	<script>
+        window.onkeypress = function(event) {
+            if (event.key === " ") {
+                window.state.pause = !window.state.pause;
+            }
+            if (event.key === "Enter") {
+                window.state.rotation = !window.state.rotation;
+            }
+        };
+	</script>
 </html>

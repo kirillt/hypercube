@@ -17,6 +17,7 @@ mod motion;
 mod shaders;
 mod canvas;
 mod state;
+mod time;
 
 use core::*;
 use motion::{Animated, Rotation};
@@ -77,8 +78,12 @@ fn main() {
         js_assert(remainder == 0, false, "triangulation looks broken".to_string());
     }
 
-    run(scene,
-        40., [0., 0., -6.],
-//        [0., 0., 0.]);
+    js! {
+        window.state = {};
+        window.state.pause = false;
+        window.state.rotation = true;
+    }
+
+    run(scene, 40., [0., 0., -6.],
         [15. * PI, 10. * PI, 5. * PI]);
 }

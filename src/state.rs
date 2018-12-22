@@ -4,10 +4,12 @@ use shaders;
 use canvas;
 
 use core::*;
+use time::TimeTracker;
 
 use std::rc::Rc;
 use std::cell::RefCell;
 
+use stdweb::Value;
 use stdweb::unstable::TryInto;
 use stdweb::web::html_element::CanvasElement;
 use stdweb::web::{
@@ -34,6 +36,9 @@ pub struct RenderingContext<A: Animated> {
 }
 
 pub struct RenderingState {
+    scene_time_tracker: TimeTracker,
+    camera_time_tracker: TimeTracker,
+
     p_matrix: WebGLUniformLocation,
     v_matrix: WebGLUniformLocation,
     m_matrix: WebGLUniformLocation,
@@ -44,7 +49,6 @@ pub struct RenderingState {
     size: i32,
 
     fps_div: HtmlElement,
-    first_drawed: Option<usize>,
     last_drawed: Option<usize>,
     frames: usize
 }
@@ -86,6 +90,9 @@ impl RenderingState {
             .unwrap();
 
         RenderingState {
+            scene_time_tracker: TimeTracker::new(),
+            camera_time_tracker: TimeTracker::new(),
+
             p_matrix: ctx.context.get_uniform_location(&ctx.shaders, "Pmatrix").unwrap(),
             v_matrix: ctx.context.get_uniform_location(&ctx.shaders, "Vmatrix").unwrap(),
             m_matrix: ctx.context.get_uniform_location(&ctx.shaders, "Mmatrix").unwrap(),
@@ -95,7 +102,6 @@ impl RenderingState {
             size,
 
             fps_div,
-            first_drawed: None,
             last_drawed: None,
             frames: 0,
         }
@@ -103,6 +109,8 @@ impl RenderingState {
 
     fn animate<A: Animated + 'static>(&mut self, ctx: RenderingContext<A>,
                                       rc: Rc<RefCell<Self>>, time: f64) {
+        let scene_paused: bool = js! { return window.state.pause } == true;
+        let camera_paused: bool = js! { return window.state.rotation } == false;
         let time = time as usize;
 
         match self.last_drawed {
@@ -121,23 +129,19 @@ impl RenderingState {
         }
         self.frames += 1;
 
-        let phase = time as f32 / TIME_UNIT_MS as f32;
+        let scene_time = self.scene_time_tracker.local_time(time, scene_paused);
+        let positions: Refs<Vec<Point>> = ctx.scene.positions(scene_time);
+        let colors: Refs<Vec<Color>> = ctx.scene.colors(scene_time);
 
         let mut model_matrix = self.model_matrix.clone();
+
+        let camera_time = self.camera_time_tracker.local_time(time, camera_paused);
+        let phase = camera_time as f32 / TIME_UNIT_MS as f32;
+
         rotate_x(&mut model_matrix, phase * ctx.rotation[0]);
         rotate_y(&mut model_matrix, phase * ctx.rotation[1]);
         rotate_z(&mut model_matrix, phase * ctx.rotation[2]);
 
-        let time = match self.first_drawed {
-            Some(first_drawed) => time - first_drawed,
-            None => {
-                self.first_drawed = Some(time);
-                0
-            }
-        };
-
-        let positions: Refs<Vec<Point>> = ctx.scene.positions(time);
-        let colors: Refs<Vec<Color>> = ctx.scene.colors(time);
         shaders::bind(&ctx.context, &ctx.shaders, positions, colors);
         ctx.context.use_program(Some(&ctx.shaders));
 
