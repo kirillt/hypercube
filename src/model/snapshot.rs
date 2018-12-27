@@ -84,6 +84,11 @@ impl Snapshot {
         self.map_positions(&|point| rotation * point)
     }
 
+    pub fn rotate(self, angles: Vec<CoordFloat>) -> Snapshot {
+        let rotation = rotation_matrix(angles);
+        self.map_positions(&|point| rotation * point)
+    }
+
     pub fn map_positions(self, transform: &Fn(Point) -> Point) -> Snapshot {
         let chunks = Rc::try_unwrap(self.positions)
             .unwrap();

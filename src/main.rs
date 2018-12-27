@@ -47,15 +47,17 @@ fn main() {
                                vec![PI / 2., PI / 3., PI / 5.], 60);
 
     let cage = combine::merge_group(vec![
-        wireframe::square_xy(0.07, 3.3, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15)),
-        wireframe::square_yz(0.07, 3.3, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15)),
-        wireframe::square_zx(0.07, 3.3, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15))
+        wireframe::square_xy(3.3, 0.07, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15)),
+        wireframe::square_yz(3.3, 0.07, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15)),
+        wireframe::square_zx(3.3, 0.07, (blue(), green(), red(), yellow()), 6, Joint::smooth(0.15)),
+
+        wireframe::stick_between((Point::new(0., 0., 0., 0.), green()), (Point::new(0., 1.65, 1.65, 1.65), blue()), 0.04, 6)
     ]);
 
     let axis = combine::merge_group(vec![
-        wireframe::stick_x(0.01, 32., (black(), red()), 6),
-        wireframe::stick_y(0.01, 32., (black(), blue()), 6),
-        wireframe::stick_z(0.01, 32., (black(), green()), 6),
+        wireframe::stick_x(32., 0.01, (black(), red()), 6),
+        wireframe::stick_y(32., 0.01, (black(), blue()), 6),
+        wireframe::stick_z(32., 0.01, (black(), green()), 6),
     ]);
 
     let scene = motion::compose(
